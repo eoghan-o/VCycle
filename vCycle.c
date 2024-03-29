@@ -8,14 +8,14 @@ double func(double x) {
 }
 
 // Takes R^{n/2 - 1} to R^{n - 1}
-void prolongationV2(double* v2h, int n, double* vh) {
+void prolongation(double* v2h, int n, double* vh) {
     int i = 0;
     int a = 0;
     int b = 0;
-    vh[0] = 1/2 * v2h[0]; // Update first
-    vh[n-2] = 1/2 * v2h[n/2 - 2]; // Update last
+    vh[0] = v2h[0]/2.0; // Update first
+    vh[n-2] = v2h[n/2 - 2]; // Update last
     for(i = 1; i < n-2; i++) {
-        vh[i] = 1/2 * (v2h[a] + v2h[b]); // Update middle
+        vh[i] = (v2h[a] + v2h[b])/2.0; // Update middle
         if(i%2) {
             a = a + 1;
         } else {
@@ -25,6 +25,8 @@ void prolongationV2(double* v2h, int n, double* vh) {
 }
 
 //Takes R^{n/2 - 1} to R^{n - 1}
+// Depracated
+/*
 void prolongation(double* v2h, int n, double* vh) {
     double I2h[(n-1)*(n/2-1)];
     int i = 0;
@@ -44,7 +46,20 @@ void prolongation(double* v2h, int n, double* vh) {
     }
     matVec(I2h, v2h, n-1, n/2 - 1, vh);
 }
+*/
 
+// Takes R^{n-1} to R^{n/2 - 1}
+void restriction(double* vh, int n, double* v2h) {
+    int i = 0;
+    int j = 0;
+    for(i = 0; i < n/2 - 1; i++) {
+        v2h[i] = (vh[j] + 2*vh[j+1] + vh[j+2])/4.0;
+        j = j + 2;
+    }
+}
+
+// Depracated
+/*
 void restriction(double* vh, int n, double* v2h) {
     double Ih[(n/2-1)*(n-1)];
     int i = 0;
@@ -64,6 +79,7 @@ void restriction(double* vh, int n, double* v2h) {
     }
     matVec(Ih, vh, (n/2 - 1), n-1, v2h);
 }
+*/
 
 void gaussSeidel(double* A, double* x, double* b, int n, int k) {
     int i = 0;
@@ -207,8 +223,6 @@ int main() {
     double A[(n-1)*(n-1)];
     generatePoissonMatrix(A, sigma, h, n);
 
-    printMatrix(A, n-1, n-1);
-
     double u[n-1];
     double test[n-1];
     double f[n-1];
@@ -223,7 +237,7 @@ int main() {
 
     int numIterations = 6;
     for(i = 0; i < numIterations; i++) {
-        vCycle(A, u, f, n, 2, 2, h, sigma);
+        vCycle(A, u, f, n, 2, 1, h, sigma);
         printf("\nAfter cycle %d, solution u:\n", i+1);
         for(j = 0; j < n-1; j++) {
             printf("%f  ", u[j]);
