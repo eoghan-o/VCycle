@@ -5,6 +5,14 @@
 void matrixMultiply(double* a, double* b, int m, int n, int k, double* result); 
 double dotProduct(double* u, double* v, int size);
 
+double norm(double* v, int n) {
+    double sum = 0;
+    int i = 0; 
+    for(i = 0; i < n; i++) {
+        sum = sum + pow(v[i], 2);
+    }
+    return pow(sum, 0.5);
+}
 // a is size m x k
 // b is size k x n
 void matrixMultiply(double* a, double* b, int m, int n, int k, double* result) {

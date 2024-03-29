@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 void matrixMultiply(double* a, double* b, int m, int n, int k, double* matrix);
+double norm(double* v, int n);
 void matrixAdd(double* a, double* b, int m, int n, double* result);
 void matVec(double* matrix, double* vec, int m, int n, double* result);
 void lower(double* matrix, int m, double* result);

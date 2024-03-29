@@ -17,14 +17,13 @@ void prolongation(double* v2h, int n, double* vh) {
     for(i = 1; i < n-2; i++) {
         vh[i] = (v2h[a] + v2h[b])/2.0; // Update middle
         if(i%2) {
-            a = a + 1;
+            a++;
         } else {
-            b = b + 1;
+            b++;
         }
     }
 }
 
-//Takes R^{n/2 - 1} to R^{n - 1}
 // Depracated
 /*
 void prolongation(double* v2h, int n, double* vh) {
@@ -81,11 +80,11 @@ void restriction(double* vh, int n, double* v2h) {
 }
 */
 
-void gaussSeidel(double* A, double* x, double* b, int n, int k) {
+void gaussSeidel(double* A, double* x, double* b, int n, int nu) {
     int i = 0;
     int j = 0;
-    int sweep = 0;
-    for(sweep = 0; sweep < k; sweep++) {
+    int k = 0;
+    for(k = 0; k < nu; k++) {
         for(i = 0; i < n; i++) {
             double sum = 0;
             for(j = 0; j < n; j++) {
@@ -104,9 +103,9 @@ void generatePoissonMatrix(double* result, double sigma, double h, int n) {
     for(i = 0; i < n-1; i++) {
         for(j = 0; j < n-1; j++) {
             if(i == j) {
-                result[(n-1)*i + j] = 2/pow(h,2) + sigma;
+                result[(n-1)*i + j] = 2 + sigma*pow(h,2);
             } else if(j == i + 1 || i == j + 1) {
-                result[(n-1)*i + j] = -1/pow(h,2);
+                result[(n-1)*i + j] = -1;
             } else {
                 result[(n-1)*i + j] = 0;
             }
@@ -118,27 +117,12 @@ void generatePoissonMatrix(double* result, double sigma, double h, int n) {
 void vCycle(double* A, double* u, double* f, int n, int nu1, int nu2, double h, double sigma) {
     if(n != 2) {
         gaussSeidel(A, u, f, n-1, nu1);
-        int i = 0;
-
-        /*
-        printf("\n\nNew Cycle:\n\n");
-        printf("Output Jacobi:\n");
-        for(i = 0; i < n - 1; i++) {
-            printf("%f   ", u[i]);
-        }
-        printf("\n");
-        */
+        printMatrix(u, n-1, 1);
 
         double residual[n-1];
         matVec(A, u, n-1, n-1, residual); // r = Au
-        /*
-        printf("Au:\n");
-        for(i = 0; i < n-1; i++) {
-            printf("%f   ", residual[i]);
-        }
-        printf("\n");
-        */
 
+        int i = 0;
         for(i = 0; i < n-1; i++) {
             residual[i] = f[i] - residual[i]; // r <- f - r = f - Au
         }
@@ -154,57 +138,19 @@ void vCycle(double* A, double* u, double* f, int n, int nu1, int nu2, double h, 
             error2h[i] = 0;
         }
 
-        /*
-        printf("Residual:\n");
-        for(i = 0; i < n - 1; i++) {
-            printf("%f   ", residual[i]);
-        }
-        printf("\nResidual 2h:\n");
-        for(i = 0; i < n/2 - 1; i++) {
-            printf("%f   ", residual2h[i]);
-        }
-        printf("\n");
-        */
-
         vCycle(A2h, error2h, residual2h, n/2, nu1, nu2, 2*h, sigma); // Do it again! A2h e2h = r2h
-
-        /*
-        printf("\n\nGoing up\n\n");
-        printf("Error2h:\n");
-        for(i = 0; i < n/2 - 1; i++) {
-            printf("%f    ", error2h[i]);
-        }
-        printf("\n");
-        */
 
         double errorh[n-1]; 
         prolongation(error2h, n, errorh);  // Interpolate e2h to eh
 
-        /*
-        printf("Error h:\n");
-        for(i = 0; i < n-1; i++) {
-            printf("%f   ", errorh[i]);
-        }
-        printf("\n");
-        */
-
         for(i = 0; i < n-1; i++) {
             u[i] = u[i] + errorh[i];
         }
-
-        /*
-        printf("u + e:\n");
-        for(i = 0; i < n-1; i++) {
-            printf("%f   ", u[i]);
-        }
-        printf("\n");
-        */
-
+        
         gaussSeidel(A, u, f, n-1, nu2); // Ah uh = fh w/ initial guess uh, nu2 times
     } else {
         // A is a 1 by 1, f is a 1 x 1
         // Data goes into initialGuess
-        //printf("\nReached Bottom\n");
         u[0] = f[0]/A[0];
     }
 }
@@ -213,6 +159,9 @@ void vCycle(double* A, double* u, double* f, int n, int nu1, int nu2, double h, 
 int main() { 
     int k = 3;
     int n = (int)(pow(2, k));
+
+    int nu1 = 2;
+    int nu2 = 1;
 
     double h = 1.0/n;    
 
@@ -224,25 +173,37 @@ int main() {
     generatePoissonMatrix(A, sigma, h, n);
 
     double u[n-1];
-    double test[n-1];
     double f[n-1];
     int i = 0;
     int j = 0;
 
     for(i = 0; i < n-1; i++) {
         u[i] = 0;
-        f[i] = func(i*h);
-        test[i] = 1;
+        f[i] = func(i*h) * pow(h,2);
     }
 
-    int numIterations = 6;
-    for(i = 0; i < numIterations; i++) {
-        vCycle(A, u, f, n, 2, 1, h, sigma);
-        printf("\nAfter cycle %d, solution u:\n", i+1);
+    double residualNorm = 0.0;
+    double tolerance = pow(10, -6);
+
+    i = 0;
+    while(i == 0 || residualNorm > tolerance) {
+        double temp[n-1];
         for(j = 0; j < n-1; j++) {
-            printf("%f  ", u[j]);
+            temp[j] = u[j];
         }
-        printf("\n");
+
+        vCycle(A, u, f, n, nu1, nu2, h, sigma);
+        
+        for(j = 0; j < n; j++) {
+            temp[j] = u[j] - temp[j];
+        }
+        residualNorm = norm(temp, n-1);
+        printf("\nCycle %d\nNorm of u(i+1)-u(i) %f\n", i+1, residualNorm);
+        i = i+1;      
+    }
+    printf("Solution vector u:\n");
+    for(i = 0; i < n-1; i++) {
+        printf("%f\n", u[i]);
     }
     return 0;
 }
