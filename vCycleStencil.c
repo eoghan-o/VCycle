@@ -6,7 +6,7 @@
 double stencilValue(int i, int j, int n, double sigma, double h) {
     if(i == j) { 
         return 2 + sigma * pow(h,2.0);
-    } else if(i == -1 || j == -1 || i == n + 1 || j == n + 1) {
+    } else if(i == -1 || j == -1 || i == n || j == n) {
         return 0;
     } else if(i == j + 1 || j == i + 1) {
         return -1.0;
@@ -24,10 +24,10 @@ void gaussSeidel(double* x, double* b, int n, int nu, double sigma, double h) {
             double sum = 0;
             for(j = 0; j < n - 1; j++) {
                 if(j != i) {
-                    sum = sum + stencilValue(i, j, n - 1, sigma, h) * x[j];
+                    sum = sum + stencilValue(i, j, n, sigma, h) * x[j];
                 }
             }
-            x[i] = (b[i] - sum)/stencilValue(i, i, n - 1, sigma, h);
+            x[i] = (b[i] - sum)/stencilValue(i, i, n, sigma, h);
         }
     }
 }
@@ -67,7 +67,7 @@ void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double 
         for(i = 0; i < n-1; i++) {
             double sum = 0;
             for(j = i - 1; j < i + 2; j++) {
-                sum = sum + stencilValue(i, j, n - 1, sigma, h) * u[j];
+                sum = sum + stencilValue(i, j, n, sigma, h) * u[j];
             }
             residual[i] = f[i] - sum;
         }
@@ -95,12 +95,9 @@ void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double 
     }
 }     
 
-int simulate(int k, FILE* fptr) {
+int simulate(int k, int nu1, int nu2, FILE* fptr) {
 
     int n = (int)pow(2,k);
-
-    int nu1 = 2;
-    int nu2 = 1;
 
     double h = 1.0/n;
 
@@ -118,7 +115,7 @@ int simulate(int k, FILE* fptr) {
     }
 
     double residualNorm = 0.0;
-    double tolerance = pow(10,-6);
+    double tolerance = pow(10,-3);
 
     i = 0;
     int a = 0;
@@ -127,20 +124,24 @@ int simulate(int k, FILE* fptr) {
     double residual[n-1];
     double sum = 0;
     while(i == 0 || residualNorm > tolerance) {
-        vCycle(u, f, n, nu1, nu2, sigma, h);
+        //vCycle(u, f, n, nu1, nu2, sigma, h);
 
+        gaussSeidel(u, f, n, 1, sigma, h); // Run gauss-seidel 1 time
+
+        // ======= Residual ========
         for(a = 0; a < n-1; a++) {
             sum = 0.0;
             for(b = a - 1; b < a + 2; b++) {
-                sum = sum + stencilValue(a, b, n - 1, sigma, h) * u[b];
+                sum = sum + stencilValue(a, b, n, sigma, h) * u[b];
             }
             residual[a] = f[a] - sum;
         }
+        residualNorm = norm(residual, n-1)/norm(f, n-1);
+        // ======= Residual ========
 
-        residualNorm = norm(residual, n-1);
-        //printf("\nCycle %d\nNorm of residual: %f\n", i+1, residualNorm);
         i = i+1;
 
+        // Write output to file
         fprintf(fptr, "%d,", i);
         for(j = 0; j < n-2; j++) {
             fprintf(fptr, "%.10f,", u[j]);
@@ -162,7 +163,7 @@ int main() {
     fptr = fopen("solution.csv", "w");
 
     int k = 3;
-    int num = simulate(k, fptr);
+    int num = simulate(k, 1, 1, fptr);
 
     //for(k = 3; k <= 10; k++) {
     //    printf("k = %d -> Num iterations: %d\n", k, simulate(k, fptr));
