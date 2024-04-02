@@ -2,9 +2,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-void matrixMultiply(double* a, double* b, int m, int n, int k, double* result); 
-double dotProduct(double* u, double* v, int size);
-
 double norm(double* v, int n) {
     double sum = 0;
     int i = 0; 

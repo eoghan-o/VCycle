@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "linearAlgebra.h"
+#include <string.h>
 
 double stencilValue(int i, int j, int n, double sigma, double h) {
     if(i == j) { 
@@ -95,34 +96,28 @@ void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double 
     }
 }     
 
-int simulate(int k, int nu1, int nu2, FILE* fptr) {
+int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
 
     int n = (int)pow(2,k);
-
     double h = 1.0/n;
-
     double sigma = 1.0;
-
     double u[n-1];
     double f[n-1];
-
-    int i = 0;
-    int j = 0;
-
-    for(i = 0; i < n; i++) {
-        u[i] = 0;
-        f[i] = i*h * pow(h,2);
-    }
-
-    double residualNorm = 0.0;
-    double tolerance = pow(10,-3);
-
-    i = 0;
     int a = 0;
     int b = 0;
     double temp[n-1];
     double residual[n-1];
+    double residualNorm = 0.0;
     double sum = 0;
+
+    int i = 0;
+    int j = 0;
+    for(i = 0; i < n; i++) {
+        u[i] = 0;
+        f[i] = i*h * pow(h,2);
+    }
+    i = 0;
+
     while(i == 0 || residualNorm > tolerance) {
         //vCycle(u, f, n, nu1, nu2, sigma, h);
 
@@ -134,14 +129,14 @@ int simulate(int k, int nu1, int nu2, FILE* fptr) {
             for(b = a - 1; b < a + 2; b++) {
                 sum = sum + stencilValue(a, b, n, sigma, h) * u[b];
             }
-            residual[a] = f[a] - sum;
+            residual[a] = f[a] - sum; // r = f - Au
         }
         residualNorm = norm(residual, n-1)/norm(f, n-1); // ||r||/||b||
         // ======= Residual ========
 
         i = i+1;
 
-        // Write output to file
+        // ==== Write output to file ====
         fprintf(fptr, "%d,", i);
         for(j = 0; j < n-2; j++) {
             fprintf(fptr, "%.10f,", u[j]);
@@ -149,22 +144,26 @@ int simulate(int k, int nu1, int nu2, FILE* fptr) {
         fprintf(fptr, "%.10f\n", u[n-2]);
     }
 
-    /*
-    printf("Solution vector u:\n");
-    for(i = 0; i < n-1; i++) {
-        printf("%f\n", u[i]);
-    }
-    */
-    return i;
+    return i; // Return number of iterations
 }
 
-int main() {
+int main(int argc, char **argv) {
     FILE* fptr;
     fptr = fopen("solution.csv", "w");
 
+    double tolerance = pow(10.0, -3);
+    double nu1 = 1; // Number of Gauss-Seidel iterations before coarsening
+    double nu2 = 1; // Number of Gauss Seidel iterations after coarsening
+
+    if(argc == 4) {
+        nu1 = atoi(argv[1]);
+        nu2 = atoi(argv[2]);
+        tolerance = pow(10, atof(argv[3]));
+    }
+
     int k = 3;
     for(k = 3; k <= 3; k++) {
-        printf("k = %d -> Num iterations: %d\n", k, simulate(k, 1, 1, fptr));
+        printf("k = %d -> Num iterations: %d\n", k, simulate(k, nu1, nu2, tolerance, fptr));
     }
     return 0;
 }
