@@ -20,15 +20,16 @@ void gaussSeidel(double* x, double* b, int n, int nu, double sigma, double h) {
     int i = 0;
     int j = 0;
     int k = 0;
+    double sum = 0;
     for(k = 0; k < nu; k++) {
         for(i = 0; i < n - 1; i++) {
-            double sum = 0;
+            sum = 0;
             for(j = 0; j < n - 1; j++) {
                 if(j != i) {
-                    sum = sum + stencilValue(i, j, n, sigma, h) * x[j];
+                    sum = sum + stencilValue(i, j, n, sigma, h) * x[j]; 
                 }
             }
-            x[i] = (b[i] - sum)/stencilValue(i, i, n, sigma, h);
+            x[i] = (b[i] - sum)/stencilValue(i, i, n, sigma, h); // x = D^(-1)(b - (U+L)x)
         }
     }
 }
@@ -127,7 +128,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
         for(a = 0; a < n-1; a++) {
             sum = 0.0;
             for(b = a - 1; b < a + 2; b++) {
-                sum = sum + stencilValue(a, b, n, sigma, h) * u[b];
+                sum = sum + stencilValue(a, b, n, sigma, h) * u[b]; // Au
             }
             residual[a] = f[a] - sum; // r = f - Au
         }
