@@ -136,7 +136,7 @@ int simulate(int k, int nu1, int nu2, FILE* fptr) {
             }
             residual[a] = f[a] - sum;
         }
-        residualNorm = norm(residual, n-1)/norm(f, n-1);
+        residualNorm = norm(residual, n-1)/norm(f, n-1); // ||r||/||b||
         // ======= Residual ========
 
         i = i+1;
@@ -163,10 +163,8 @@ int main() {
     fptr = fopen("solution.csv", "w");
 
     int k = 3;
-    int num = simulate(k, 1, 1, fptr);
-
-    //for(k = 3; k <= 10; k++) {
-    //    printf("k = %d -> Num iterations: %d\n", k, simulate(k, fptr));
-    //}
+    for(k = 3; k <= 3; k++) {
+        printf("k = %d -> Num iterations: %d\n", k, simulate(k, 1, 1, fptr));
+    }
     return 0;
 }
