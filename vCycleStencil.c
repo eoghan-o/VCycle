@@ -161,7 +161,7 @@ int main(int argc, char **argv) {
     if(argc == 4) {
         nu1 = atoi(argv[1]);
         nu2 = atoi(argv[2]);
-        tolerance = pow(10, atof(argv[3]));
+        tolerance = pow(10, -1*atof(argv[3]));
     }
 
     int k = 3;
