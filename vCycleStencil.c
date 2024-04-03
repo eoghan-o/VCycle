@@ -99,6 +99,8 @@ void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double 
 
 int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
 
+    fprintf(fptr, "Simulating with k = %d\n", k);
+
     int n = (int)pow(2,k);
     double h = 1.0/n;
     double sigma = 1.0;
