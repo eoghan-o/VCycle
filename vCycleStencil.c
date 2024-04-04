@@ -112,6 +112,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     double temp[n-1];
     double residual[n-1];
     double residualNorm = 0.0;
+    double residualFNorm = 0.0;
     double sum = 0;
 
     int i = 0;
@@ -123,7 +124,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     i = 0;
 
     while(i == 0 || residualNorm > tolerance) {
-        vCycle(u, f, n, nu1, nu2, sigma, h);
+        //vCycle(u, f, n, nu1, nu2, sigma, h);
 
         // ======= Residual ========
         for(a = 0; a < n-1; a++) {
@@ -133,8 +134,10 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
             }
             residual[a] = f[a] - sum; // r = f - Au
         }
-        residualNorm = norm(residual, n-1)/norm(f, n-1); // ||r||/||b||
+        residualNorm = norm(residual, n-1); // ||r||/||f||
+        residualFNorm = norm(f, n-1);
         // ======= Residual ========
+        printf("\nResidual of u %f\nResidual of f %f\nIteration number %d\n", residualNorm, residualFNorm, i);
 
         i = i+1;
 
