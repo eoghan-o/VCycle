@@ -141,9 +141,9 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
         // ======= Residual ========
         */
         for(a = 0; a < n-1; a++) {
-            trueError[a] = u[a] - sin(M_PI * (a+1) * h);
+            trueError[a] = u[a];
         }
-        residualNorm = norm(trueError, n-1);
+        residualNorm = norm(trueError, n-1) * pow(h, 0.5);
         printf("True error %f\n", residualNorm);
 
         //i = i+1;
