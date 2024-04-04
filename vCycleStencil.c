@@ -120,12 +120,13 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     int j = 0;
     for(i = 0; i < n; i++) {
         u[i] = 0; //sin(M_PI * 1 * i * h);
-        f[i] = M_PI * M_PI * 1 * sin(M_PI * 1 * i * h) * pow(h,2);
+        f[i] = M_PI * M_PI * 1 * sin(M_PI * 1 * (i+1) * h) * pow(h,2);
     }
     i = 0;
 
-    while(i == 0 || residualNorm > tolerance) {
-        vCycle(u, f, n, nu1, nu2, sigma, h);
+    //while(i == 0 || residualNorm > tolerance) {
+        //vCycle(u, f, n, nu1, nu2, sigma, h);
+        gaussSeidel(u, f, n, 10000, sigma, h);
         /*
         // ======= Residual ========
         for(a = 0; a < n-1; a++) {
@@ -139,7 +140,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
         // ======= Residual ========
         */
         for(a = 0; a < n-1; a++) {
-            trueError[a] = u[a] - sin(M_PI * a * h);
+            trueError[a] = u[a] - sin(M_PI * (a+1) * h);
         }
         residualNorm = norm(trueError, n-1)/norm(f, n-1);
         printf("True error %f\n", residualNorm);
@@ -152,7 +153,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
             fprintf(fptr, "%.10f,", u[j]);
         }
         fprintf(fptr, "%.10f\n", u[n-2]);
-    }
+    //}
 
     return i; // Return number of iterations
 }
@@ -196,8 +197,8 @@ int main(int argc, char **argv) {
     }
     */
 
-    int k = 5;
-    for(k = 5; k <= 8; k++) {
+    int k = 3;
+    for(k = 3; k <= 8; k++) {
         printf("k = %d -> Num iterations: %d\n", k, simulate(k, nu1, nu2, tolerance, fptr));
     }
     return 0;
