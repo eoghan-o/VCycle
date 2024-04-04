@@ -6,11 +6,11 @@
 
 double stencilValue(int i, int j, int n, double sigma, double h) {
     if(i == j) { 
-        return 2 + sigma * pow(h,2.0);
+        return 2.0/pow(h,2) + sigma;
     } else if(i == -1 || j == -1 || i == n || j == n) {
         return 0;
     } else if(i == j + 1 || j == i + 1) {
-        return -1.0;
+        return -1.0/pow(h,2);
     } else {
         return 0;
     }
@@ -114,8 +114,6 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     double residualNorm = 0.0;
     double sum = 0;
 
-    double trueError[n-1];
-
     int i = 0;
     int j = 0;
     for(i = 0; i < n; i++) {
@@ -123,11 +121,10 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
         f[i] = 0;
     }
     i = 0;
-
-    //while(i == 0 || residualNorm > tolerance) {
-    for(i = 0; i < 20; i++) {
+    
+    while(i == 0 || residualNorm > tolerance) {
+    //for(i = 0; i < 20; i++) {
         vCycle(u, f, n, nu1, nu2, sigma, h);
-        //gaussSeidel(u, f, n, 50000, sigma, h);
         /*
         // ======= Residual ========
         for(a = 0; a < n-1; a++) {
@@ -140,13 +137,11 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
         residualNorm = norm(residual, n-1)/norm(f, n-1); // ||r||/||f||
         // ======= Residual ========
         */
-        for(a = 0; a < n-1; a++) {
-            trueError[a] = u[a];
-        }
-        residualNorm = norm(trueError, n-1) * pow(h, 0.5);
-        printf("True error %f\n", residualNorm);
 
-        //i = i+1;
+        residualNorm = norm(u, n-1) * pow(h, 0.5);
+        printf("True error %.16e\n", residualNorm);
+
+        i = i+1;
 
         // ==== Write output to file ====
         fprintf(fptr, "%d,", i);
@@ -173,30 +168,8 @@ int main(int argc, char **argv) {
         tolerance = pow(10, -1*atof(argv[3]));
     }
 
-    /*
-    double vec[7];
-    int i = 0;
-    for(i = 0; i < 7; i++) {
-        vec[i] = 1;
-    }
-    double prolongVec[15];
-    double restrictVec[3];
-    restriction(vec, 8, restrictVec);
-    prolongation(vec, 16, prolongVec);
-
-    printf("Initial vector:\n");
-    for(i = 0; i < 7; i++) {
-        printf("%f  ", vec[i]);
-    }
-    printf("\nProlonged vector:\n");
-    for(i = 0; i < 15; i++) {
-        printf("%f  ", prolongVec[i]);
-    }
-    printf("\nRestricted vector:\n");
-    for(i = 0; i < 3; i++) {
-        printf("%f  ", restrictVec[i]);
-    }
-    */
+    double vh[7];
+    double v2h[3];
 
     int k = 3;
     for(k = 3; k <= 8; k++) {
