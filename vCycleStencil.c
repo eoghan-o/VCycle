@@ -39,7 +39,7 @@ void prolongation(double* v2h, int n, double* vh) {
     int a = 0;
     int b = 0;
     vh[0] = v2h[0]/2.0;
-    vh[n-2] = v2h[n/2 - 2];
+    vh[n-2] = v2h[n/2 - 2]/2.0;
     for(i = 1; i < n-2; i++) {
         vh[i] = (v2h[a] + v2h[b])/2.0;
         if(i%2) {
@@ -112,20 +112,21 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     double temp[n-1];
     double residual[n-1];
     double residualNorm = 0.0;
-    double residualFNorm = 0.0;
     double sum = 0;
+
+    double trueError[n-1];
 
     int i = 0;
     int j = 0;
     for(i = 0; i < n; i++) {
-        u[i] = sin(M_PI * 1 * i * h);
+        u[i] = 0; //sin(M_PI * 1 * i * h);
         f[i] = M_PI * M_PI * 1 * sin(M_PI * 1 * i * h) * pow(h,2);
     }
     i = 0;
 
     while(i == 0 || residualNorm > tolerance) {
-        //vCycle(u, f, n, nu1, nu2, sigma, h);
-
+        vCycle(u, f, n, nu1, nu2, sigma, h);
+        /*
         // ======= Residual ========
         for(a = 0; a < n-1; a++) {
             sum = 0.0;
@@ -134,10 +135,14 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
             }
             residual[a] = f[a] - sum; // r = f - Au
         }
-        residualNorm = norm(residual, n-1); // ||r||/||f||
-        residualFNorm = norm(f, n-1);
+        residualNorm = norm(residual, n-1)/norm(f, n-1); // ||r||/||f||
         // ======= Residual ========
-        printf("\nResidual of u %f\nResidual of f %f\nIteration number %d\n", residualNorm, residualFNorm, i);
+        */
+        for(a = 0; a < n-1; a++) {
+            trueError[a] = u[a] - sin(M_PI * a * h);
+        }
+        residualNorm = norm(trueError, n-1)/norm(f, n-1);
+        printf("True error %f\n", residualNorm);
 
         i = i+1;
 
@@ -166,8 +171,33 @@ int main(int argc, char **argv) {
         tolerance = pow(10, -1*atof(argv[3]));
     }
 
-    int k = 3;
-    for(k = 3; k <= 8; k++) {
+    /*
+    double vec[7];
+    int i = 0;
+    for(i = 0; i < 7; i++) {
+        vec[i] = 1;
+    }
+    double prolongVec[15];
+    double restrictVec[3];
+    restriction(vec, 8, restrictVec);
+    prolongation(vec, 16, prolongVec);
+
+    printf("Initial vector:\n");
+    for(i = 0; i < 7; i++) {
+        printf("%f  ", vec[i]);
+    }
+    printf("\nProlonged vector:\n");
+    for(i = 0; i < 15; i++) {
+        printf("%f  ", prolongVec[i]);
+    }
+    printf("\nRestricted vector:\n");
+    for(i = 0; i < 3; i++) {
+        printf("%f  ", restrictVec[i]);
+    }
+    */
+
+    int k = 5;
+    for(k = 5; k <= 8; k++) {
         printf("k = %d -> Num iterations: %d\n", k, simulate(k, nu1, nu2, tolerance, fptr));
     }
     return 0;
