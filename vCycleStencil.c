@@ -64,10 +64,11 @@ void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double 
         gaussSeidel(u, f, n, nu1, sigma, h);
 
         double residual[n-1];
+        double sum = 0.0;
         int i = 0;
         int j = 0;
         for(i = 0; i < n-1; i++) {
-            double sum = 0;
+            sum = 0;
             for(j = i - 1; j < i + 2; j++) {
                 sum = sum + stencilValue(i, j, n, sigma, h) * u[j];
             }
@@ -103,7 +104,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
 
     int n = (int)pow(2,k);
     double h = 1.0/n;
-    double sigma = 1.0;
+    double sigma = 0.0;
     double u[n-1];
     double f[n-1];
     int a = 0;
@@ -116,15 +117,13 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     int i = 0;
     int j = 0;
     for(i = 0; i < n; i++) {
-        u[i] = 0;
-        f[i] = i*h * pow(h,2);
+        u[i] = sin(M_PI * 1 * i * h);
+        f[i] = M_PI * M_PI * 1 * sin(M_PI * 1 * i * h) * pow(h,2);
     }
     i = 0;
 
     while(i == 0 || residualNorm > tolerance) {
-        //vCycle(u, f, n, nu1, nu2, sigma, h);
-
-        gaussSeidel(u, f, n, 1, sigma, h); // Run gauss-seidel 1 time
+        vCycle(u, f, n, nu1, nu2, sigma, h);
 
         // ======= Residual ========
         for(a = 0; a < n-1; a++) {
@@ -154,7 +153,7 @@ int main(int argc, char **argv) {
     FILE* fptr;
     fptr = fopen("solution.csv", "w");
 
-    double tolerance = pow(10.0, -3);
+    double tolerance = pow(10.0, -6);
     double nu1 = 1; // Number of Gauss-Seidel iterations before coarsening
     double nu2 = 1; // Number of Gauss Seidel iterations after coarsening
 
@@ -165,7 +164,7 @@ int main(int argc, char **argv) {
     }
 
     int k = 3;
-    for(k = 3; k <= 3; k++) {
+    for(k = 3; k <= 8; k++) {
         printf("k = %d -> Num iterations: %d\n", k, simulate(k, nu1, nu2, tolerance, fptr));
     }
     return 0;
