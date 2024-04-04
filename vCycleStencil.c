@@ -60,13 +60,17 @@ void restriction(double* vh, int n, double* v2h) {
 }
 
 void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double h) {
+    int i = 0;
+    int j = 0;
+    double sum = 0.0;
+    double residual[n-1];
+    double residual2h[n/2-1];
+    double error2h[n/2-1];
+    double errorh[n-1];
+
     if(n != 2) {
         gaussSeidel(u, f, n, nu1, sigma, h);
 
-        double residual[n-1];
-        double sum = 0.0;
-        int i = 0;
-        int j = 0;
         for(i = 0; i < n-1; i++) {
             sum = 0;
             for(j = i - 1; j < i + 2; j++) {
@@ -75,22 +79,23 @@ void vCycle(double* u, double* f, int n, int nu1, int nu2, double sigma, double 
             residual[i] = f[i] - sum;
         }
 
-        double residual2h[n/2-1];
+        printf("Grid level n=%d, residual norm: %.16e\n", n, norm(residual, n-1)*pow(h,0.5));
+
         restriction(residual, n, residual2h);
 
-        double error2h[n/2-1];
         for(i = 0; i < n/2-1; i++) {
             error2h[i] = 0;
         }
 
         vCycle(error2h, residual2h, n/2, nu1, nu2, sigma, 2*h);
 
-        double errorh[n-1];
         prolongation(error2h, n, errorh);
 
         for(i = 0; i < n-1; i++) {
             u[i] = u[i] + errorh[i];
         }
+
+        printf("Grid level n=%d, error norm: %.16f\n", n, norm(errorh, n-1)*pow(h,0.5));
 
         gaussSeidel(u, f, n, nu2, sigma, h);
     } else {
@@ -124,6 +129,7 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
     
     while(i == 0 || residualNorm > tolerance) {
     //for(i = 0; i < 20; i++) {
+        printf("\nIteration %d\n", i+1);
         vCycle(u, f, n, nu1, nu2, sigma, h);
         /*
         // ======= Residual ========
@@ -138,17 +144,17 @@ int simulate(int k, int nu1, int nu2, double tolerance, FILE* fptr) {
         // ======= Residual ========
         */
 
-        residualNorm = norm(u, n-1) * pow(h, 0.5);
-        printf("True error %.16e\n", residualNorm);
+        residualNorm = norm(u, n-1) * pow(h, 0.5); // Discrete l2 norm
 
         i = i+1;
-
+        /*
         // ==== Write output to file ====
         fprintf(fptr, "%d,", i);
         for(j = 0; j < n-2; j++) {
             fprintf(fptr, "%.10f,", u[j]);
         }
         fprintf(fptr, "%.10f\n", u[n-2]);
+        */
     }
 
     return i; // Return number of iterations
@@ -167,9 +173,6 @@ int main(int argc, char **argv) {
         nu2 = atoi(argv[2]);
         tolerance = pow(10, -1*atof(argv[3]));
     }
-
-    double vh[7];
-    double v2h[3];
 
     int k = 3;
     for(k = 3; k <= 8; k++) {
